@@ -36,10 +36,18 @@ cd "$REPO_DIR"
 # Localhost LLM — do NOT go through fwdproxy
 unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
 
-: "${OPENAI_API_BASE:=http://127.0.0.1:8000/v1}"
-: "${MASALA_MODEL:=Qwen/Qwen3-VL-8B-Instruct}"
-: "${OPENAI_API_KEY:=none}"
-export OPENAI_API_BASE MASALA_MODEL OPENAI_API_KEY
+# Override any pre-set OPENAI_* env (e.g. hackathon Llama endpoint in the
+# user's shell) unless the caller explicitly opts out with MASALA_KEEP_ENV=1.
+if [[ "${MASALA_KEEP_ENV:-0}" != "1" ]]; then
+    export OPENAI_API_BASE="${MASALA_LLM_BASE:-http://127.0.0.1:8000/v1}"
+    export MASALA_MODEL="${MASALA_MODEL:-Qwen/Qwen3-VL-8B-Instruct}"
+    export OPENAI_API_KEY="none"
+else
+    : "${OPENAI_API_BASE:=http://127.0.0.1:8000/v1}"
+    : "${MASALA_MODEL:=Qwen/Qwen3-VL-8B-Instruct}"
+    : "${OPENAI_API_KEY:=none}"
+    export OPENAI_API_BASE MASALA_MODEL OPENAI_API_KEY
+fi
 
 if [[ -f "$HOME/venv/bin/activate" ]]; then
     # shellcheck disable=SC1091
