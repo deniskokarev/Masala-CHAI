@@ -115,7 +115,7 @@ def comp_detection(image_path):
         # Perform prediction
         result = model.predict(source=image_path)
 
-        annotated_img,prediction = annotate_bounding_boxes(image_path,result[0].boxes.data)
+        annotated_img,prediction = annotate_bounding_boxes(image_path,result[0].boxes.data.cpu())
 
         return annotated_img,prediction
             

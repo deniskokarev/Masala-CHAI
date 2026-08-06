@@ -10,10 +10,15 @@ import re
 import json
 
 def run_gpt(this_messages, this_model="gpt-3.5-turbo",api_key="abc"):  # push to gpt
+    import os
+    base_url = os.environ.get("OPENAI_API_BASE", None)
+    for k in ("http_proxy","https_proxy","HTTP_PROXY","HTTPS_PROXY"):
+        os.environ.pop(k, None)
     client = OpenAI(
-    api_key=api_key, 
+    api_key=api_key or "none",
+    base_url=base_url,
     )
-    chat_completion = client.chat.completions.create(messages=this_messages,model=this_model)
+    chat_completion = client.chat.completions.create(messages=this_messages,model=this_model, max_tokens=1500)
     return chat_completion
 
 
@@ -34,7 +39,9 @@ def gpt_image_oneshot(image_link1, image_link2, new_prompt="This image contains 
     response = ""
     while response == "" and attempts < retry:
         try:
-            response = run_gpt(message_hist, "gpt-5",api_key).choices[0].message.content
+            import os
+            _model = os.environ.get("MASALA_MODEL", "Qwen/Qwen3-VL-8B-Instruct")
+            response = run_gpt(message_hist, _model, api_key).choices[0].message.content
         except Exception as e:
             attempts += 1
             if verbose: print("Encountered error:", e)
@@ -84,9 +91,9 @@ def extract_code(image_path1, image_path2, verbose=True,api_key="abc"):
     
 
     raw_code = gpt_image_oneshot(image_link1, image_link2,  ask_code,api_key=api_key)
-    
-    #processed_code = get_code(raw_code)
-    extracted_text = re.search(r'```(.*?)```', raw_code, re.DOTALL).group(1)
+
+    m = re.search(r'```(?:spice|SPICE|text)?\s*(.*?)```', raw_code, re.DOTALL)
+    extracted_text = m.group(1) if m else raw_code
 
     return extracted_text.strip()
 
@@ -177,6 +184,7 @@ def app(directory_path,target_path,api_key):
             try:
                 process_image(image_path, output_dir,api_key)
             except Exception as e:
+                import traceback; traceback.print_exc()
                 print(f"Error processing {filename}: {e}")
                 continue
     

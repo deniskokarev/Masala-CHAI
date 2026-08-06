@@ -39,6 +39,11 @@ def node_detector(gray):
     # using hough tranform to detect lines
     lines = cv2.HoughLinesP(blnk, rho, theta, threshold, np.array([]),
                         min_line_length, max_line_gap)
+    if lines is None:
+        return []
+    # normalize to shape (N, 1, 4) — some OpenCV builds return (N, 4)
+    if lines.ndim == 2:
+        lines = lines[:, None, :]
 
     
     # segmenting lines into horizontal and vertical lines
